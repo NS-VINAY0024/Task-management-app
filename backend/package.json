@@ -25,6 +25,7 @@
     "@types/node": "^20.x",
     "prisma": "^5.22.0",
     "ts-node-dev": "^2.0.0",
-    "typescript": "^5.x"
+    "typescript": "^5.x",
+    "zod": "^4.3.6"
   }
 }
