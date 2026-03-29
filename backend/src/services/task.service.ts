@@ -1,5 +1,10 @@
 import { PrismaClient, Priority } from "@prisma/client";
 import type { Task } from "@prisma/client";
+import type {
+  CreateTaskInput,
+  GetTasksInput,
+  UpdateTaskInput,
+} from "../validations/task.validation";
 
 type TaskStatus = Task["status"];
 
@@ -12,13 +17,13 @@ interface GetTasksParams {
   order?: "asc" | "desc";
 }
 
-export const createTaskService = async (data: any) => {
+export const createTaskService = async (data: CreateTaskInput) => {
   return await prisma.task.create({
     data,
   });
 };
 
-export const getTasksService = async (params: GetTasksParams) => {
+export const getTasksService = async (params: GetTasksInput | GetTasksParams) => {
   const { status, priority, sortBy = "createdAt", order = "desc" } = params;
 
   return await prisma.task.findMany({
@@ -38,7 +43,7 @@ export const getTaskByIdService = async (id: string) => {
   });
 };
 
-export const updateTaskService = async (id: string, data: any) => {
+export const updateTaskService = async (id: string, data: UpdateTaskInput) => {
   return await prisma.task.update({
     where: { id },
     data,

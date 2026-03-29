@@ -1,8 +1,12 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { createTask } from "../services/taskService";
+import type { ChangeEvent } from "react";
+import { createTask, getApiErrorMessage } from "../services/taskService";
+import type { TaskFormValues } from "../types/task";
+import { validateTaskForm } from "../utils/taskValidation";
 
 import {
+  Alert,
   Container,
   TextField,
   Button,
@@ -14,15 +18,17 @@ import {
 const CreateTask = () => {
   const navigate = useNavigate();
 
-  const [formData, setFormData] = useState({
+  const [formData, setFormData] = useState<TaskFormValues>({
     title: "",
     description: "",
     status: "TODO",
     priority: "MEDIUM",
     dueDate: "",
   });
+  const [submitting, setSubmitting] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
-  const handleChange = (e: any) => {
+  const handleChange = (e: ChangeEvent<HTMLInputElement>) => {
     setFormData({
       ...formData,
       [e.target.name]: e.target.value,
@@ -30,18 +36,22 @@ const CreateTask = () => {
   };
 
   const handleSubmit = async () => {
-    try {
-      const payload = {
-        ...formData,
-        dueDate: formData.dueDate
-          ? new Date(formData.dueDate).toISOString()
-          : undefined,
-      };
+    const validationError = validateTaskForm(formData);
+    if (validationError) {
+      setError(validationError);
+      return;
+    }
 
-      await createTask(payload);
+    setSubmitting(true);
+    setError(null);
+
+    try {
+      await createTask(formData);
       navigate("/");
     } catch (error) {
-      console.error("Error creating task", error);
+      setError(getApiErrorMessage(error));
+    } finally {
+      setSubmitting(false);
     }
   };
 
@@ -50,6 +60,7 @@ const CreateTask = () => {
       <Typography variant="h4" mt={3} mb={2}>
         Create Task
       </Typography>
+      {error && <Alert severity="error">{error}</Alert>}
 
       <Stack spacing={2}>
         <TextField
@@ -100,10 +111,11 @@ const CreateTask = () => {
           name="dueDate"
           value={formData.dueDate}
           onChange={handleChange}
+          InputLabelProps={{ shrink: true }}
         />
 
-        <Button variant="contained" onClick={handleSubmit}>
-          Create Task
+        <Button variant="contained" onClick={handleSubmit} disabled={submitting}>
+          {submitting ? "Creating..." : "Create Task"}
         </Button>
       </Stack>
     </Container>

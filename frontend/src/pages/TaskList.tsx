@@ -1,10 +1,11 @@
 import { useEffect, useState } from "react";
 import { Button } from "@mui/material";
 import { useNavigate } from "react-router-dom";
-import { getTasks } from "../services/taskService";
+import { getApiErrorMessage, getTasks } from "../services/taskService";
 import type { Task } from "../types/task";
 
 import {
+  Alert,
   Container,
   Typography,
   Card,
@@ -44,17 +45,21 @@ const TaskList = () => {
   const navigate = useNavigate();
   const [tasks, setTasks] = useState<Task[]>([]);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    fetchTasks();
+    void fetchTasks();
   }, []);
 
   const fetchTasks = async () => {
+    setLoading(true);
+    setError(null);
+
     try {
       const data = await getTasks();
       setTasks(data);
     } catch (error) {
-      console.error("Error fetching tasks", error);
+      setError(getApiErrorMessage(error));
     } finally {
       setLoading(false);
     }
@@ -83,7 +88,11 @@ const TaskList = () => {
       >
         Create Task
       </Button>
+      {error && <Alert severity="error" sx={{ mb: 2 }}>{error}</Alert>}
       <Stack spacing={2}>
+        {!tasks.length && !error ? (
+          <Typography color="text.secondary">No tasks found.</Typography>
+        ) : null}
         {tasks.map((task) => (
           <Card
             key={task.id}

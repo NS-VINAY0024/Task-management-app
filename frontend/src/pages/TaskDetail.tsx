@@ -1,46 +1,89 @@
 import { useEffect, useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import type { Task } from "../types/task";
-import axios from "axios";
 
-import { Container, Typography, Button, Stack } from "@mui/material";
-import { getTasksById } from "../services/taskService";
-
-const API_URL = "http://localhost:5000/api/tasks";
+import {
+  Alert,
+  Button,
+  CircularProgress,
+  Container,
+  Stack,
+  Typography,
+} from "@mui/material";
+import {
+  deleteTask,
+  getApiErrorMessage,
+  getTaskById,
+} from "../services/taskService";
 
 const TaskDetail = () => {
   const { id } = useParams();
   const navigate = useNavigate();
 
   const [task, setTask] = useState<Task | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [isDeleting, setIsDeleting] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    fetchTasks();
-  }, []);
+    if (!id) {
+      setError("Task id is missing");
+      setLoading(false);
+      return;
+    }
 
-  const fetchTasks = async () => {
+    void fetchTask(id);
+  }, [id]);
+
+  const fetchTask = async (taskId: string) => {
+    setLoading(true);
+    setError(null);
+
     try {
-      const data = await getTasksById(id!);
+      const data = await getTaskById(taskId);
       setTask(data);
     } catch (error) {
-      console.error("Error fetching tasks", error);
+      setError(getApiErrorMessage(error));
     } finally {
+      setLoading(false);
     }
   };
 
   const handleDelete = async () => {
+    if (!id) {
+      return;
+    }
+
+    setIsDeleting(true);
+    setError(null);
+
     try {
-      await axios.delete(`${API_URL}/deleteTask/${id}`);
+      await deleteTask(id);
       navigate("/");
     } catch (error) {
-      console.error(error);
+      setError(getApiErrorMessage(error));
+    } finally {
+      setIsDeleting(false);
     }
   };
 
-  if (!task) return <p>Loading...</p>;
+  if (loading) {
+    return (
+      <Container>
+        <Stack alignItems="center" mt={5}>
+          <CircularProgress />
+        </Stack>
+      </Container>
+    );
+  }
 
   return (
     <Container>
+      {error && <Alert severity="error" sx={{ mt: 3 }}>{error}</Alert>}
+      {!task ? (
+        <Typography mt={3}>Task not found.</Typography>
+      ) : (
+        <>
       <Typography variant="h4" mt={3}>
         {task.title}
       </Typography>
@@ -61,9 +104,11 @@ const TaskDetail = () => {
         </Button>
 
         <Button variant="outlined" color="error" onClick={handleDelete}>
-          Delete
+          {isDeleting ? "Deleting..." : "Delete"}
         </Button>
       </Stack>
+        </>
+      )}
     </Container>
   );
 };
