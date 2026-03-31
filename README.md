@@ -99,4 +99,8 @@ Supported list query params:
 - PostgreSQL is available locally during development.
 
 ## Screenshots
-Screenshots were requested in the assignment PDF but are not yet included in this repository. Add them here before submission if needed.
+<img width="2239" height="1275" alt="image" src="https://github.com/user-attachments/assets/395f35f3-f84b-4356-a1fc-59ac2647bad9" />
+<img width="2239" height="1281" alt="image" src="https://github.com/user-attachments/assets/ce8b6dfc-5ff0-4f72-9e98-01372c43c178" />
+<img width="2239" height="1264" alt="image" src="https://github.com/user-attachments/assets/6c1b7784-eda2-4d74-95a6-d52c76d4d0e8" />
+<img width="2237" height="1269" alt="image" src="https://github.com/user-attachments/assets/f8c2f236-7c0a-47c6-a140-ae95bef0f30f" />
+
