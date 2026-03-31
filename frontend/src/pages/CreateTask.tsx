@@ -1,7 +1,8 @@
-import { useState, useCallback } from "react";
+import { useCallback, useState } from "react";
 import type { ChangeEvent } from "react";
 import { useNavigate } from "react-router-dom";
-import { Container, Typography, Box } from "@mui/material";
+import { Box, Chip, Stack, Typography } from "@mui/material";
+import AutoAwesomeRoundedIcon from "@mui/icons-material/AutoAwesomeRounded";
 
 import { createTask, getApiErrorMessage } from "../services/taskService";
 import { validateTaskForm, hasErrors } from "../utils/taskValidation";
@@ -63,12 +64,21 @@ const CreateTask = () => {
   const handleCancel = useCallback(() => navigate("/"), [navigate]);
 
   return (
-    <Container maxWidth="sm">
-      <Box mt={4} mb={3}>
-        <Typography variant="h4" component="h1">
+    <Box sx={{ maxWidth: 760, mx: "auto" }}>
+      <Stack spacing={1.5} sx={{ mb: 4 }}>
+        <Chip
+          icon={<AutoAwesomeRoundedIcon />}
+          label="New planning space"
+          sx={{ alignSelf: "flex-start" }}
+        />
+        <Typography variant="h3" component="h1">
           Create Task
         </Typography>
-      </Box>
+        <Typography variant="body1" color="text.secondary" sx={{ maxWidth: 620 }}>
+          Capture the work clearly, set the right priority, and give it a timeline
+          that keeps your workflow moving.
+        </Typography>
+      </Stack>
 
       <TaskForm
         formData={formData}
@@ -80,7 +90,7 @@ const CreateTask = () => {
         onSubmit={() => void handleSubmit()}
         onCancel={handleCancel}
       />
-    </Container>
+    </Box>
   );
 };
 

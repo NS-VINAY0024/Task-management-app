@@ -1,4 +1,4 @@
-import { Chip } from "@mui/material";
+import { alpha, Chip } from "@mui/material";
 import type { ChipProps } from "@mui/material";
 import type { TaskPriority, TaskStatus } from "../types/task";
 
@@ -10,10 +10,19 @@ const STATUS_LABEL: Record<TaskStatus, string> = {
   DONE: "Done",
 };
 
-const STATUS_COLOR: Record<TaskStatus, ChipProps["color"]> = {
-  TODO: "default",
-  IN_PROGRESS: "warning",
-  DONE: "success",
+const STATUS_STYLES: Record<TaskStatus, ChipProps["sx"]> = {
+  TODO: {
+    color: "#5f6b76",
+    backgroundColor: alpha("#5f6b76", 0.12),
+  },
+  IN_PROGRESS: {
+    color: "#9a5d11",
+    backgroundColor: alpha("#d3933b", 0.18),
+  },
+  DONE: {
+    color: "#2b6d45",
+    backgroundColor: alpha("#3c8d5a", 0.18),
+  },
 };
 
 interface StatusBadgeProps {
@@ -24,8 +33,8 @@ interface StatusBadgeProps {
 export const StatusBadge = ({ status, size = "small" }: StatusBadgeProps) => (
   <Chip
     label={STATUS_LABEL[status]}
-    color={STATUS_COLOR[status]}
     size={size}
+    sx={STATUS_STYLES[status]}
     aria-label={`Status: ${STATUS_LABEL[status]}`}
   />
 );
@@ -38,10 +47,19 @@ const PRIORITY_LABEL: Record<TaskPriority, string> = {
   HIGH: "High",
 };
 
-const PRIORITY_COLOR: Record<TaskPriority, ChipProps["color"]> = {
-  LOW: "success",
-  MEDIUM: "warning",
-  HIGH: "error",
+const PRIORITY_STYLES: Record<TaskPriority, ChipProps["sx"]> = {
+  LOW: {
+    color: "#2b6d45",
+    backgroundColor: alpha("#3c8d5a", 0.14),
+  },
+  MEDIUM: {
+    color: "#9a5d11",
+    backgroundColor: alpha("#d3933b", 0.16),
+  },
+  HIGH: {
+    color: "#983d31",
+    backgroundColor: alpha("#c85f51", 0.16),
+  },
 };
 
 interface PriorityBadgeProps {
@@ -55,8 +73,8 @@ export const PriorityBadge = ({
 }: PriorityBadgeProps) => (
   <Chip
     label={PRIORITY_LABEL[priority]}
-    color={PRIORITY_COLOR[priority]}
     size={size}
+    sx={PRIORITY_STYLES[priority]}
     aria-label={`Priority: ${PRIORITY_LABEL[priority]}`}
   />
 );

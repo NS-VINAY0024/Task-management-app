@@ -2,13 +2,14 @@ import { useEffect, useState, useCallback } from "react";
 import type { ChangeEvent } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import {
-  Container,
-  Typography,
-  Box,
-  CircularProgress,
   Alert,
+  Box,
+  Chip,
+  CircularProgress,
   Stack,
+  Typography,
 } from "@mui/material";
+import EditRoundedIcon from "@mui/icons-material/EditRounded";
 
 import {
   getTaskById,
@@ -124,33 +125,42 @@ const EditTask = () => {
   // ─── Render ───────────────────────────────────────────────────────────────
   if (loading) {
     return (
-      <Container maxWidth="sm">
+      <Box sx={{ maxWidth: 760, mx: "auto" }}>
         <Stack alignItems="center" mt={8} spacing={2}>
           <CircularProgress aria-label="Loading task" />
           <Typography color="text.secondary">Loading task…</Typography>
         </Stack>
-      </Container>
+      </Box>
     );
   }
 
   // If load failed and we have no data at all, show a standalone error.
   if (apiError && !formData.title) {
     return (
-      <Container maxWidth="sm">
+      <Box sx={{ maxWidth: 760, mx: "auto" }}>
         <Alert severity="error" sx={{ mt: 4 }}>
           {apiError}
         </Alert>
-      </Container>
+      </Box>
     );
   }
 
   return (
-    <Container maxWidth="sm">
-      <Box mt={4} mb={3}>
-        <Typography variant="h4" component="h1">
+    <Box sx={{ maxWidth: 760, mx: "auto" }}>
+      <Stack spacing={1.5} sx={{ mb: 4 }}>
+        <Chip
+          icon={<EditRoundedIcon />}
+          label="Refine your plan"
+          sx={{ alignSelf: "flex-start" }}
+        />
+        <Typography variant="h3" component="h1">
           Edit Task
         </Typography>
-      </Box>
+        <Typography variant="body1" color="text.secondary" sx={{ maxWidth: 620 }}>
+          Update the details so the task still reflects the work, urgency, and
+          timeline you actually need.
+        </Typography>
+      </Stack>
 
       <TaskForm
         formData={formData}
@@ -162,7 +172,7 @@ const EditTask = () => {
         onSubmit={() => void handleSubmit()}
         onCancel={handleCancel}
       />
-    </Container>
+    </Box>
   );
 };
 

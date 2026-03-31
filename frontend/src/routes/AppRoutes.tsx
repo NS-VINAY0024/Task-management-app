@@ -1,7 +1,8 @@
-import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
-import TaskList from "../pages/TaskList";
+import { BrowserRouter, Navigate, Route, Routes } from "react-router-dom";
+import AppShell from "../components/AppShell";
+import TaskListView from "../pages/TaskListView";
 import CreateTask from "../pages/CreateTask";
-import TaskDetail from "../pages/TaskDetail";
+import TaskDetailView from "../pages/TaskDetailView";
 import EditTask from "../pages/EditTask";
 
 /**
@@ -13,10 +14,12 @@ import EditTask from "../pages/EditTask";
 const AppRoutes = () => (
   <BrowserRouter>
     <Routes>
-      <Route path="/" element={<TaskList />} />
-      <Route path="/create" element={<CreateTask />} />
-      <Route path="/task/:id" element={<TaskDetail />} />
-      <Route path="/edit/:id" element={<EditTask />} />
+      <Route element={<AppShell />}>
+        <Route path="/" element={<TaskListView />} />
+        <Route path="/create" element={<CreateTask />} />
+        <Route path="/task/:id" element={<TaskDetailView />} />
+        <Route path="/edit/:id" element={<EditTask />} />
+      </Route>
       <Route path="*" element={<Navigate to="/" replace />} />
     </Routes>
   </BrowserRouter>
