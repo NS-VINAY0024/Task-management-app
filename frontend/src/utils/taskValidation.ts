@@ -1,17 +1,20 @@
-import type { TaskFormValues } from "../types/task";
+import type { TaskFormValues, TaskFormErrors } from "../types/task";
 
-export const validateTaskForm = (values: TaskFormValues): string | null => {
+export const validateTaskForm = (values: TaskFormValues): TaskFormErrors => {
+  const errors: TaskFormErrors = {};
+
   if (!values.title.trim()) {
-    return "Title is required";
-  }
-
-  if (values.title.trim().length > 200) {
-    return "Title must be 200 characters or fewer";
+    errors.title = "Title is required.";
+  } else if (values.title.trim().length > 200) {
+    errors.title = "Title must be 200 characters or fewer.";
   }
 
   if (values.description.trim().length > 2000) {
-    return "Description must be 2000 characters or fewer";
+    errors.description = "Description must be 2000 characters or fewer.";
   }
 
-  return null;
+  return errors;
 };
+
+export const hasErrors = (errors: TaskFormErrors): boolean =>
+  Object.keys(errors).length > 0;

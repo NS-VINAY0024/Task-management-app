@@ -1,22 +1,24 @@
 import axios from "axios";
 import type {
   ApiErrorResponse,
+  ApiSuccessResponse,
   Task,
   TaskFormValues,
   TaskQueryParams,
 } from "../types/task";
 
+// Single axios instance — base URL from env so it works in all environments.
 const api = axios.create({
-  baseURL: "http://localhost:5000/api/tasks",
+  baseURL:
+    import.meta.env.VITE_API_BASE_URL ?? "http://localhost:5000/api/tasks",
 });
 
-interface ApiSuccessResponse<T> {
-  success: true;
-  data: T;
-  message?: string;
-}
+// ─── Helpers ──────────────────────────────────────────────────────────────────
 
-const buildTaskPayload = (data: TaskFormValues) => ({
+/** Strips empty/undefined values and normalises payload for create/update. */
+const buildTaskPayload = (
+  data: TaskFormValues,
+): Partial<TaskFormValues> & { dueDate?: string } => ({
   title: data.title.trim(),
   description: data.description.trim() || undefined,
   status: data.status,
@@ -24,7 +26,8 @@ const buildTaskPayload = (data: TaskFormValues) => ({
   dueDate: data.dueDate ? new Date(data.dueDate).toISOString() : undefined,
 });
 
-export const getApiErrorMessage = (error: unknown) => {
+/** Extracts a human-readable message from any thrown error. */
+export const getApiErrorMessage = (error: unknown): string => {
   if (axios.isAxiosError<ApiErrorResponse>(error)) {
     return (
       error.response?.data?.message ??
@@ -32,23 +35,26 @@ export const getApiErrorMessage = (error: unknown) => {
       error.message
     );
   }
-
   return "Something went wrong. Please try again.";
 };
 
-export const getTasks = async (params?: TaskQueryParams) => {
+// ─── API calls ────────────────────────────────────────────────────────────────
+
+export const getTasks = async (params?: TaskQueryParams): Promise<Task[]> => {
   const response = await api.get<ApiSuccessResponse<Task[]>>("/getAllTasks", {
     params,
   });
   return response.data.data;
 };
 
-export const getTaskById = async (id: string) => {
-  const response = await api.get<ApiSuccessResponse<Task>>(`/getTaskById/${id}`);
+export const getTaskById = async (id: string): Promise<Task> => {
+  const response = await api.get<ApiSuccessResponse<Task>>(
+    `/getTaskById/${id}`,
+  );
   return response.data.data;
 };
 
-export const createTask = async (data: TaskFormValues) => {
+export const createTask = async (data: TaskFormValues): Promise<Task> => {
   const response = await api.post<ApiSuccessResponse<Task>>(
     "/createTask",
     buildTaskPayload(data),
@@ -56,7 +62,10 @@ export const createTask = async (data: TaskFormValues) => {
   return response.data.data;
 };
 
-export const updateTask = async (id: string, data: TaskFormValues) => {
+export const updateTask = async (
+  id: string,
+  data: TaskFormValues,
+): Promise<Task> => {
   const response = await api.put<ApiSuccessResponse<Task>>(
     `/updateTask/${id}`,
     buildTaskPayload(data),
@@ -64,6 +73,6 @@ export const updateTask = async (id: string, data: TaskFormValues) => {
   return response.data.data;
 };
 
-export const deleteTask = async (id: string) => {
+export const deleteTask = async (id: string): Promise<void> => {
   await api.delete(`/deleteTask/${id}`);
 };

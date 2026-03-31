@@ -1,164 +1,167 @@
-import { useEffect, useState } from "react";
-import { useParams, useNavigate } from "react-router-dom";
+import { useEffect, useState, useCallback } from "react";
 import type { ChangeEvent } from "react";
-import type { TaskFormValues } from "../types/task";
+import { useParams, useNavigate } from "react-router-dom";
 import {
-  getApiErrorMessage,
-  getTaskById,
-  updateTask,
-} from "../services/taskService";
-import { validateTaskForm } from "../utils/taskValidation";
-
-import {
-  Alert,
   Container,
-  TextField,
-  Button,
   Typography,
-  MenuItem,
-  Stack,
+  Box,
   CircularProgress,
+  Alert,
+  Stack,
 } from "@mui/material";
 
-const EditTask = () => {
-  const { id } = useParams();
-  const navigate = useNavigate();
+import {
+  getTaskById,
+  updateTask,
+  getApiErrorMessage,
+} from "../services/taskService";
+import { validateTaskForm, hasErrors } from "../utils/taskValidation";
+import { toDateInputValue } from "../utils/formatDate";
+import { useSnackbar } from "../context/SnackbarContext";
+import TaskForm from "../components/TaskForm";
+import type { TaskFormValues, TaskFormErrors } from "../types/task";
 
-  const [formData, setFormData] = useState<TaskFormValues>({
-    title: "",
-    description: "",
-    status: "TODO",
-    priority: "MEDIUM",
-    dueDate: "",
-  });
+const DEFAULT_FORM: TaskFormValues = {
+  title: "",
+  description: "",
+  status: "TODO",
+  priority: "MEDIUM",
+  dueDate: "",
+};
+
+const EditTask = () => {
+  const { id } = useParams<{ id: string }>();
+  const navigate = useNavigate();
+  const { showSnackbar } = useSnackbar();
+
+  const [formData, setFormData] = useState<TaskFormValues>(DEFAULT_FORM);
+  const [fieldErrors, setFieldErrors] = useState<TaskFormErrors>({});
+  const [apiError, setApiError] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
   const [submitting, setSubmitting] = useState(false);
-  const [error, setError] = useState<string | null>(null);
 
+  // ─── Load existing task ───────────────────────────────────────────────────
   useEffect(() => {
     if (!id) {
-      setError("Task id is missing");
+      setApiError("Task ID is missing.");
       setLoading(false);
       return;
     }
 
-    void fetchTask(id);
+    let cancelled = false; // prevent setState after unmount
+
+    const fetchTask = async () => {
+      setLoading(true);
+      setApiError(null);
+
+      try {
+        const task = await getTaskById(id);
+        if (!cancelled) {
+          setFormData({
+            title: task.title,
+            description: task.description ?? "",
+            status: task.status,
+            priority: task.priority,
+            dueDate: toDateInputValue(task.dueDate),
+          });
+        }
+      } catch (err) {
+        if (!cancelled) setApiError(getApiErrorMessage(err));
+      } finally {
+        if (!cancelled) setLoading(false);
+      }
+    };
+
+    void fetchTask();
+    return () => {
+      cancelled = true;
+    };
   }, [id]);
 
-  const fetchTask = async (taskId: string) => {
-    setLoading(true);
-    setError(null);
+  // ─── Handlers ─────────────────────────────────────────────────────────────
+  const handleChange = useCallback((e: ChangeEvent<HTMLInputElement>) => {
+    const { name, value } = e.target;
+    setFormData((prev) => ({ ...prev, [name]: value }));
+    setFieldErrors((prev) => {
+      if (!prev[name as keyof TaskFormErrors]) return prev;
+      const next = { ...prev };
+      delete next[name as keyof TaskFormErrors];
+      return next;
+    });
+  }, []);
 
-    try {
-      const task = await getTaskById(taskId);
-      setFormData({
-        title: task.title,
-        description: task.description ?? "",
-        status: task.status,
-        priority: task.priority,
-        dueDate: task.dueDate ? task.dueDate.split("T")[0] : "",
-      });
-    } catch (error) {
-      setError(getApiErrorMessage(error));
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const handleChange = (e: ChangeEvent<HTMLInputElement>) => {
-    setFormData({ ...formData, [e.target.name]: e.target.value });
-  };
-
-  const handleSubmit = async () => {
+  const handleSubmit = useCallback(async () => {
     if (!id) {
-      setError("Task id is missing");
+      setApiError("Task ID is missing.");
       return;
     }
 
-    const validationError = validateTaskForm(formData);
-    if (validationError) {
-      setError(validationError);
+    const errors = validateTaskForm(formData);
+    if (hasErrors(errors)) {
+      setFieldErrors(errors);
       return;
     }
 
     setSubmitting(true);
-    setError(null);
+    setApiError(null);
 
     try {
       await updateTask(id, formData);
+      showSnackbar("Task updated successfully!", "success");
       navigate(`/task/${id}`);
-    } catch (error) {
-      setError(getApiErrorMessage(error));
+    } catch (err) {
+      setApiError(getApiErrorMessage(err));
     } finally {
       setSubmitting(false);
     }
-  };
+  }, [id, formData, navigate, showSnackbar]);
 
+  const handleCancel = useCallback(
+    () => navigate(id ? `/task/${id}` : "/"),
+    [navigate, id],
+  );
+
+  // ─── Render ───────────────────────────────────────────────────────────────
   if (loading) {
     return (
       <Container maxWidth="sm">
-        <Stack alignItems="center" mt={5}>
-          <CircularProgress />
+        <Stack alignItems="center" mt={8} spacing={2}>
+          <CircularProgress aria-label="Loading task" />
+          <Typography color="text.secondary">Loading task…</Typography>
         </Stack>
+      </Container>
+    );
+  }
+
+  // If load failed and we have no data at all, show a standalone error.
+  if (apiError && !formData.title) {
+    return (
+      <Container maxWidth="sm">
+        <Alert severity="error" sx={{ mt: 4 }}>
+          {apiError}
+        </Alert>
       </Container>
     );
   }
 
   return (
     <Container maxWidth="sm">
-      <Typography variant="h4" mt={3} mb={2}>
-        Edit Task
-      </Typography>
-      {error && <Alert severity="error">{error}</Alert>}
+      <Box mt={4} mb={3}>
+        <Typography variant="h4" component="h1">
+          Edit Task
+        </Typography>
+      </Box>
 
-      <Stack spacing={2}>
-        <TextField
-          name="title"
-          value={formData.title}
-          onChange={handleChange}
-          label="Title"
-        />
-        <TextField
-          name="description"
-          value={formData.description}
-          onChange={handleChange}
-          label="Description"
-        />
-
-        <TextField
-          select
-          name="status"
-          value={formData.status}
-          onChange={handleChange}
-        >
-          <MenuItem value="TODO">TODO</MenuItem>
-          <MenuItem value="IN_PROGRESS">IN_PROGRESS</MenuItem>
-          <MenuItem value="DONE">DONE</MenuItem>
-        </TextField>
-
-        <TextField
-          select
-          name="priority"
-          value={formData.priority}
-          onChange={handleChange}
-        >
-          <MenuItem value="LOW">LOW</MenuItem>
-          <MenuItem value="MEDIUM">MEDIUM</MenuItem>
-          <MenuItem value="HIGH">HIGH</MenuItem>
-        </TextField>
-
-        <TextField
-          type="date"
-          name="dueDate"
-          value={formData.dueDate}
-          onChange={handleChange}
-          InputLabelProps={{ shrink: true }}
-        />
-
-        <Button variant="contained" onClick={handleSubmit} disabled={submitting}>
-          {submitting ? "Updating..." : "Update Task"}
-        </Button>
-      </Stack>
+      <TaskForm
+        formData={formData}
+        errors={fieldErrors}
+        apiError={apiError}
+        submitting={submitting}
+        submitLabel="Update Task"
+        onChange={handleChange}
+        onSubmit={() => void handleSubmit()}
+        onCancel={handleCancel}
+      />
     </Container>
   );
 };

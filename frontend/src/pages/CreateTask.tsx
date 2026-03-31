@@ -1,123 +1,85 @@
-import { useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useState, useCallback } from "react";
 import type { ChangeEvent } from "react";
-import { createTask, getApiErrorMessage } from "../services/taskService";
-import type { TaskFormValues } from "../types/task";
-import { validateTaskForm } from "../utils/taskValidation";
+import { useNavigate } from "react-router-dom";
+import { Container, Typography, Box } from "@mui/material";
 
-import {
-  Alert,
-  Container,
-  TextField,
-  Button,
-  Typography,
-  MenuItem,
-  Stack,
-} from "@mui/material";
+import { createTask, getApiErrorMessage } from "../services/taskService";
+import { validateTaskForm, hasErrors } from "../utils/taskValidation";
+import { useSnackbar } from "../context/SnackbarContext";
+import TaskForm from "../components/TaskForm";
+import type { TaskFormValues, TaskFormErrors } from "../types/task";
+
+const DEFAULT_FORM: TaskFormValues = {
+  title: "",
+  description: "",
+  status: "TODO",
+  priority: "MEDIUM",
+  dueDate: "",
+};
 
 const CreateTask = () => {
   const navigate = useNavigate();
+  const { showSnackbar } = useSnackbar();
 
-  const [formData, setFormData] = useState<TaskFormValues>({
-    title: "",
-    description: "",
-    status: "TODO",
-    priority: "MEDIUM",
-    dueDate: "",
-  });
+  const [formData, setFormData] = useState<TaskFormValues>(DEFAULT_FORM);
+  const [fieldErrors, setFieldErrors] = useState<TaskFormErrors>({});
+  const [apiError, setApiError] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
-  const [error, setError] = useState<string | null>(null);
 
-  const handleChange = (e: ChangeEvent<HTMLInputElement>) => {
-    setFormData({
-      ...formData,
-      [e.target.name]: e.target.value,
+  const handleChange = useCallback((e: ChangeEvent<HTMLInputElement>) => {
+    const { name, value } = e.target;
+    setFormData((prev) => ({ ...prev, [name]: value }));
+
+    // Clear the field's inline error as the user types (eager feedback).
+    setFieldErrors((prev) => {
+      if (!prev[name as keyof TaskFormErrors]) return prev;
+      const next = { ...prev };
+      delete next[name as keyof TaskFormErrors];
+      return next;
     });
-  };
+  }, []);
 
-  const handleSubmit = async () => {
-    const validationError = validateTaskForm(formData);
-    if (validationError) {
-      setError(validationError);
+  const handleSubmit = useCallback(async () => {
+    const errors = validateTaskForm(formData);
+    if (hasErrors(errors)) {
+      setFieldErrors(errors);
       return;
     }
 
     setSubmitting(true);
-    setError(null);
+    setApiError(null);
 
     try {
       await createTask(formData);
+      showSnackbar("Task created successfully!", "success");
       navigate("/");
-    } catch (error) {
-      setError(getApiErrorMessage(error));
+    } catch (err) {
+      setApiError(getApiErrorMessage(err));
     } finally {
       setSubmitting(false);
     }
-  };
+  }, [formData, navigate, showSnackbar]);
+
+  const handleCancel = useCallback(() => navigate("/"), [navigate]);
 
   return (
     <Container maxWidth="sm">
-      <Typography variant="h4" mt={3} mb={2}>
-        Create Task
-      </Typography>
-      {error && <Alert severity="error">{error}</Alert>}
+      <Box mt={4} mb={3}>
+        <Typography variant="h4" component="h1">
+          Create Task
+        </Typography>
+      </Box>
 
-      <Stack spacing={2}>
-        <TextField
-          label="Title"
-          name="title"
-          value={formData.title}
-          onChange={handleChange}
-          fullWidth
-        />
-
-        <TextField
-          label="Description"
-          name="description"
-          value={formData.description}
-          onChange={handleChange}
-          multiline
-          rows={3}
-          fullWidth
-        />
-
-        <TextField
-          select
-          label="Status"
-          name="status"
-          value={formData.status}
-          onChange={handleChange}
-        >
-          <MenuItem value="TODO">TODO</MenuItem>
-          <MenuItem value="IN_PROGRESS">IN_PROGRESS</MenuItem>
-          <MenuItem value="DONE">DONE</MenuItem>
-        </TextField>
-
-        <TextField
-          select
-          label="Priority"
-          name="priority"
-          value={formData.priority}
-          onChange={handleChange}
-        >
-          <MenuItem value="LOW">LOW</MenuItem>
-          <MenuItem value="MEDIUM">MEDIUM</MenuItem>
-          <MenuItem value="HIGH">HIGH</MenuItem>
-        </TextField>
-
-        <TextField
-          type="date"
-          label="Due Date"
-          name="dueDate"
-          value={formData.dueDate}
-          onChange={handleChange}
-          InputLabelProps={{ shrink: true }}
-        />
-
-        <Button variant="contained" onClick={handleSubmit} disabled={submitting}>
-          {submitting ? "Creating..." : "Create Task"}
-        </Button>
-      </Stack>
+      <TaskForm
+        formData={formData}
+        errors={fieldErrors}
+        apiError={apiError}
+        submitting={submitting}
+        submitLabel="Create Task"
+        onChange={handleChange}
+        onSubmit={() => void handleSubmit()}
+        onCancel={handleCancel}
+      />
     </Container>
   );
 };
