@@ -1,4 +1,4 @@
-import { Request, Response } from "express";
+import type { NextFunction, Request, Response } from "express";
 import {
   getTaskByIdService,
   getTasksService,
@@ -14,9 +14,14 @@ import {
   getTaskByIdSchema,
   deleteTaskSchema,
 } from "../validations/task.validation";
+import { AppError } from "../utils/appError";
 
 // CREATE TASK
-export const createTaskController = async (req: Request, res: Response) => {
+export const createTaskController = async (
+  req: Request,
+  res: Response,
+  next: NextFunction,
+) => {
   try {
     const validatedData = createTaskSchema.parse(req.body);
 
@@ -26,25 +31,17 @@ export const createTaskController = async (req: Request, res: Response) => {
       success: true,
       data: newTask,
     });
-  } catch (error: any) {
-    console.error(error);
-
-    if (error.name === "ZodError") {
-      return res.status(400).json({
-        success: false,
-        message: error.errors,
-      });
-    }
-
-    return res.status(500).json({
-      success: false,
-      message: "Failed to create task",
-    });
+  } catch (error) {
+    return next(error);
   }
 };
 
 // GET ALL TASKS (with filters)
-export const getTasksController = async (req: Request, res: Response) => {
+export const getTasksController = async (
+  req: Request,
+  res: Response,
+  next: NextFunction,
+) => {
   try {
     const validatedQuery = getTasksSchema.parse(req.query);
 
@@ -54,60 +51,41 @@ export const getTasksController = async (req: Request, res: Response) => {
       success: true,
       data: tasks,
     });
-  } catch (error: any) {
-    console.error(error);
-
-    if (error.name === "ZodError") {
-      return res.status(400).json({
-        success: false,
-        message: error.errors,
-      });
-    }
-
-    return res.status(500).json({
-      success: false,
-      message: "Failed to fetch tasks",
-    });
+  } catch (error) {
+    return next(error);
   }
 };
 
 // GET TASK BY ID
-export const getTaskByIdController = async (req: Request, res: Response) => {
+export const getTaskByIdController = async (
+  req: Request,
+  res: Response,
+  next: NextFunction,
+) => {
   try {
     const { id } = getTaskByIdSchema.parse(req.params);
 
     const task = await getTaskByIdService(id);
 
     if (!task) {
-      return res.status(404).json({
-        success: false,
-        message: "Task not found",
-      });
+      throw new AppError("Task not found", 404);
     }
 
     return res.status(200).json({
       success: true,
       data: task,
     });
-  } catch (error: any) {
-    console.error(error);
-
-    if (error.name === "ZodError") {
-      return res.status(400).json({
-        success: false,
-        message: error.errors,
-      });
-    }
-
-    return res.status(500).json({
-      success: false,
-      message: "Failed to fetch task",
-    });
+  } catch (error) {
+    return next(error);
   }
 };
 
 // UPDATE TASK
-export const updateTaskController = async (req: Request, res: Response) => {
+export const updateTaskController = async (
+  req: Request,
+  res: Response,
+  next: NextFunction,
+) => {
   try {
     const { id } = getTaskByIdSchema.parse(req.params);
     const validatedData = updateTaskSchema.parse(req.body);
@@ -118,32 +96,17 @@ export const updateTaskController = async (req: Request, res: Response) => {
       success: true,
       data: updatedTask,
     });
-  } catch (error: any) {
-    console.error(error);
-
-    if (error.name === "ZodError") {
-      return res.status(400).json({
-        success: false,
-        message: error.errors,
-      });
-    }
-
-    if (error.code === "P2025") {
-      return res.status(404).json({
-        success: false,
-        message: "Task not found",
-      });
-    }
-
-    return res.status(500).json({
-      success: false,
-      message: "Failed to update task",
-    });
+  } catch (error) {
+    return next(error);
   }
 };
 
 // DELETE TASK
-export const deleteTaskController = async (req: Request, res: Response) => {
+export const deleteTaskController = async (
+  req: Request,
+  res: Response,
+  next: NextFunction,
+) => {
   try {
     const { id } = deleteTaskSchema.parse(req.params);
 
@@ -153,26 +116,7 @@ export const deleteTaskController = async (req: Request, res: Response) => {
       success: true,
       message: "Task deleted successfully",
     });
-  } catch (error: any) {
-    console.error(error);
-
-    if (error.name === "ZodError") {
-      return res.status(400).json({
-        success: false,
-        message: error.errors,
-      });
-    }
-
-    if (error.code === "P2025") {
-      return res.status(404).json({
-        success: false,
-        message: "Task not found",
-      });
-    }
-
-    return res.status(500).json({
-      success: false,
-      message: "Failed to delete task",
-    });
+  } catch (error) {
+    return next(error);
   }
 };
