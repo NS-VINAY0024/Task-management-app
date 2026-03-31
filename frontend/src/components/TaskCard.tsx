@@ -1,14 +1,18 @@
-import { Card, CardContent, Typography, Stack, Box } from "@mui/material";
+import { Card, CardContent, Typography, Stack, Box, Button } from "@mui/material";
 import { useNavigate } from "react-router-dom";
+import EditIcon from "@mui/icons-material/Edit";
+import DeleteIcon from "@mui/icons-material/Delete";
 import { StatusBadge, PriorityBadge } from "./StatusBadge";
 import { formatDate } from "../utils/formatDate";
 import type { Task } from "../types/task";
 
 interface TaskCardProps {
   task: Task;
+  onDelete: (task: Task) => void;
+  deleting?: boolean;
 }
 
-const TaskCard = ({ task }: TaskCardProps) => {
+const TaskCard = ({ task, onDelete, deleting = false }: TaskCardProps) => {
   const navigate = useNavigate();
 
   return (
@@ -43,6 +47,34 @@ const TaskCard = ({ task }: TaskCardProps) => {
             Due: {formatDate(task.dueDate)}
           </Typography>
         </Box>
+
+        <Stack direction="row" spacing={1} mt={2}>
+          <Button
+            size="small"
+            variant="outlined"
+            startIcon={<EditIcon />}
+            onClick={(e) => {
+              e.stopPropagation();
+              navigate(`/edit/${task.id}`);
+            }}
+          >
+            Edit
+          </Button>
+
+          <Button
+            size="small"
+            variant="outlined"
+            color="error"
+            startIcon={<DeleteIcon />}
+            disabled={deleting}
+            onClick={(e) => {
+              e.stopPropagation();
+              onDelete(task);
+            }}
+          >
+            {deleting ? "Deleting..." : "Delete"}
+          </Button>
+        </Stack>
       </CardContent>
     </Card>
   );

@@ -17,7 +17,6 @@ const AppRoutes = () => (
       <Route path="/create" element={<CreateTask />} />
       <Route path="/task/:id" element={<TaskDetail />} />
       <Route path="/edit/:id" element={<EditTask />} />
-      {/* Redirect any unknown path back to home */}
       <Route path="*" element={<Navigate to="/" replace />} />
     </Routes>
   </BrowserRouter>

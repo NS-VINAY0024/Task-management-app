@@ -41,22 +41,20 @@ export const getApiErrorMessage = (error: unknown): string => {
 // ─── API calls ────────────────────────────────────────────────────────────────
 
 export const getTasks = async (params?: TaskQueryParams): Promise<Task[]> => {
-  const response = await api.get<ApiSuccessResponse<Task[]>>("/getAllTasks", {
+  const response = await api.get<ApiSuccessResponse<Task[]>>("/", {
     params,
   });
   return response.data.data;
 };
 
 export const getTaskById = async (id: string): Promise<Task> => {
-  const response = await api.get<ApiSuccessResponse<Task>>(
-    `/getTaskById/${id}`,
-  );
+  const response = await api.get<ApiSuccessResponse<Task>>(`/${id}`);
   return response.data.data;
 };
 
 export const createTask = async (data: TaskFormValues): Promise<Task> => {
   const response = await api.post<ApiSuccessResponse<Task>>(
-    "/createTask",
+    "/",
     buildTaskPayload(data),
   );
   return response.data.data;
@@ -67,12 +65,12 @@ export const updateTask = async (
   data: TaskFormValues,
 ): Promise<Task> => {
   const response = await api.put<ApiSuccessResponse<Task>>(
-    `/updateTask/${id}`,
+    `/${id}`,
     buildTaskPayload(data),
   );
   return response.data.data;
 };
 
 export const deleteTask = async (id: string): Promise<void> => {
-  await api.delete(`/deleteTask/${id}`);
+  await api.delete(`/${id}`);
 };
