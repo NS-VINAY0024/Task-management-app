@@ -13,6 +13,14 @@ export const validateTaskForm = (values: TaskFormValues): TaskFormErrors => {
     errors.description = "Description must be 2000 characters or fewer.";
   }
 
+  if (values.dueDate) {
+    const dueDate = new Date(`${values.dueDate}T00:00:00`);
+
+    if (Number.isNaN(dueDate.getTime())) {
+      errors.dueDate = "Enter a valid due date.";
+    }
+  }
+
   return errors;
 };
 

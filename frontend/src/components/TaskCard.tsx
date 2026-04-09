@@ -12,7 +12,11 @@ import DeleteIcon from "@mui/icons-material/Delete";
 import EditIcon from "@mui/icons-material/Edit";
 import { useNavigate } from "react-router-dom";
 import { PriorityBadge, StatusBadge } from "./StatusBadge";
-import { formatDate } from "../utils/formatDate";
+import {
+  formatDate,
+  getDueDateLabel,
+  isOverdueDate,
+} from "../utils/formatDate";
 import type { Task } from "../types/task";
 
 interface TaskCardProps {
@@ -29,6 +33,7 @@ const TaskCard = ({ task, onDelete, deleting = false }: TaskCardProps) => {
       : task.priority === "MEDIUM"
         ? "#d3933b"
         : "#3c8d5a";
+  const overdue = task.status !== "DONE" && isOverdueDate(task.dueDate);
 
   return (
     <Card
@@ -105,9 +110,19 @@ const TaskCard = ({ task, onDelete, deleting = false }: TaskCardProps) => {
         >
           <Stack direction="row" spacing={1} alignItems="center" color="text.secondary">
             <CalendarTodayRoundedIcon sx={{ fontSize: 18 }} />
-            <Typography variant="body2">
-              Due {task.dueDate ? formatDate(task.dueDate) : "No deadline"}
-            </Typography>
+            <Box>
+              <Typography variant="body2">
+                Due {task.dueDate ? formatDate(task.dueDate) : "No deadline"}
+              </Typography>
+              {task.dueDate && (
+                <Typography
+                  variant="caption"
+                  color={overdue ? "error.main" : "text.secondary"}
+                >
+                  {getDueDateLabel(task.dueDate)}
+                </Typography>
+              )}
+            </Box>
           </Stack>
 
           <Stack direction="row" spacing={1} flexWrap="wrap" useFlexGap>

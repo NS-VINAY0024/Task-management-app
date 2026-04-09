@@ -1,22 +1,22 @@
-import express from "express";
-import cors from "cors";
-import taskRoutes from "./routes/task.routes";
-import { errorHandler, notFoundHandler } from "./middleware/error.middleware";
+import { prisma } from "./db/prisma";
+import { env } from "./config/env";
+import { app } from "./app";
 
-const app = express();
-
-app.use(cors());
-app.use(express.json());
-
-app.use("/api/tasks", taskRoutes);
-
-app.get("/", (req, res) => {
-  res.send("API running");
+const server = app.listen(env.PORT, () => {
+  console.log(`Server running on port ${env.PORT}`);
 });
 
-app.use(notFoundHandler);
-app.use(errorHandler);
+const shutdown = async () => {
+  await prisma.$disconnect();
+  server.close(() => {
+    process.exit(0);
+  });
+};
 
-app.listen(5000, () => {
-  console.log("Server running on port 5000");
+process.on("SIGINT", () => {
+  void shutdown();
+});
+
+process.on("SIGTERM", () => {
+  void shutdown();
 });

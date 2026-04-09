@@ -2,11 +2,21 @@ import { z } from "zod";
 
 const statusSchema = z.enum(["TODO", "IN_PROGRESS", "DONE"]);
 const prioritySchema = z.enum(["LOW", "MEDIUM", "HIGH"]);
+const sortBySchema = z.enum(["createdAt", "dueDate"]);
+const orderSchema = z.enum(["asc", "desc"]);
+const dueDateSchema = z.string().datetime();
 const optionalTrimmedString = z
   .string()
   .trim()
   .max(2000)
   .transform((value) => (value.length === 0 ? undefined : value))
+  .optional();
+const clearableTrimmedString = z
+  .string()
+  .trim()
+  .max(2000)
+  .transform((value) => (value.length === 0 ? null : value))
+  .nullable()
   .optional();
 
 // Create Task Schema
@@ -15,12 +25,17 @@ export const createTaskSchema = z.object({
   description: optionalTrimmedString,
   status: statusSchema.optional(),
   priority: prioritySchema.optional(),
-  dueDate: z.string().datetime().optional(),
+  dueDate: dueDateSchema.optional(),
 });
 
-// Update Task Schema (partial)
-export const updateTaskSchema = createTaskSchema
-  .partial()
+export const updateTaskSchema = z
+  .object({
+    title: z.string().trim().min(1, "Title is required").max(200).optional(),
+    description: clearableTrimmedString,
+    status: statusSchema.optional(),
+    priority: prioritySchema.optional(),
+    dueDate: dueDateSchema.nullable().optional(),
+  })
   .refine((data) => Object.keys(data).length > 0, {
     message: "At least one field is required for update",
   });
@@ -29,8 +44,11 @@ export const updateTaskSchema = createTaskSchema
 export const getTasksSchema = z.object({
   status: statusSchema.optional(),
   priority: prioritySchema.optional(),
-  sortBy: z.enum(["createdAt", "dueDate"]).optional(),
-  order: z.enum(["asc", "desc"]).optional(),
+  search: z.string().trim().min(1).max(200).optional(),
+  sortBy: sortBySchema.optional(),
+  order: orderSchema.optional(),
+  page: z.coerce.number().int().min(1).default(1),
+  pageSize: z.coerce.number().int().min(1).max(50).default(10),
 });
 
 // Get Task By Id Schema

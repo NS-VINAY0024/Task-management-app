@@ -6,9 +6,11 @@ import {
   updateTaskController,
   deleteTaskController,
 } from "../controllers/task.controller";
+import { requireAuth } from "../middleware/auth.middleware";
 
 const router = express.Router();
 
+router.use(requireAuth);
 router.get("/", getTasksController);
 router.get("/:id", getTaskByIdController);
 router.post("/", createTaskController);

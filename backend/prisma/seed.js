@@ -1,20 +1,28 @@
-import { PrismaClient } from "@prisma/client";
-import { hashPassword } from "../src/utils/password";
+const { PrismaClient } = require("@prisma/client");
+const { randomBytes, scryptSync } = require("crypto");
 
 const prisma = new PrismaClient();
 
+const hashPassword = (password) => {
+  const salt = randomBytes(16).toString("hex");
+  const derivedKey = scryptSync(password, salt, 64).toString("hex");
+  return `${salt}:${derivedKey}`;
+};
+
 async function main() {
-  const passwordHash = hashPassword("Demo@123");
+  const email = "demo@example.com";
+  const password = "Demo@123";
+  const passwordHash = hashPassword(password);
 
   const user = await prisma.user.upsert({
-    where: { email: "demo@example2.com" },
+    where: { email },
     update: {
       name: "Demo User",
       passwordHash,
     },
     create: {
       name: "Demo User",
-      email: "demo@example2.com",
+      email,
       passwordHash,
     },
   });
@@ -63,5 +71,14 @@ async function main() {
     ],
   });
 
-  console.log("Seed data inserted for demo@example.com / demo12345");
+  console.log(`Seed data inserted for ${email} / ${password}`);
 }
+
+main()
+  .catch((error) => {
+    console.error(error);
+    process.exit(1);
+  })
+  .finally(async () => {
+    await prisma.$disconnect();
+  });

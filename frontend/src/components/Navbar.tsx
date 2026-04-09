@@ -1,11 +1,19 @@
 import { AppBar, Box, Button, Container, Stack, Toolbar, Typography } from "@mui/material";
 import AddIcon from "@mui/icons-material/Add";
 import DashboardRoundedIcon from "@mui/icons-material/DashboardRounded";
-import { Link, useLocation } from "react-router-dom";
+import { Link, useLocation, useNavigate } from "react-router-dom";
+import { useAuth } from "../context/AuthContext";
+import { useSnackbar } from "../context/SnackbarContext";
 
 const Navbar = () => {
   const location = useLocation();
+  const navigate = useNavigate();
+  const { isAuthenticated, user, logoutUser } = useAuth();
+  const { showSnackbar } = useSnackbar();
   const onCreatePage = location.pathname === "/create";
+  const onTasksPage = location.pathname === "/";
+  const onAuthPage =
+    location.pathname === "/login" || location.pathname === "/register";
 
   return (
     <AppBar position="sticky">
@@ -47,28 +55,57 @@ const Navbar = () => {
             </Stack>
           </Box>
 
-          <Stack direction="row" spacing={1} alignItems="center">
-            <Button
-              component={Link}
-              to="/"
-              color="inherit"
-              sx={{
-                px: 2,
-                backgroundColor:
-                  location.pathname === "/" ? "rgba(31,111,120,0.08)" : "transparent",
-              }}
-            >
-              Tasks
-            </Button>
-            <Button
-              component={Link}
-              to="/create"
-              variant={onCreatePage ? "outlined" : "contained"}
-              startIcon={<AddIcon />}
-            >
-              New Task
-            </Button>
-          </Stack>
+          {!onAuthPage && (
+            <Stack direction="row" spacing={1} alignItems="center">
+              {isAuthenticated ? (
+                <>
+                  <Button
+                    component={Link}
+                    to="/"
+                    color="inherit"
+                    sx={{
+                      px: 2,
+                      backgroundColor: onTasksPage
+                        ? "rgba(31,111,120,0.08)"
+                        : "transparent",
+                    }}
+                  >
+                    Tasks
+                  </Button>
+                  <Button
+                    component={Link}
+                    to="/create"
+                    variant={onCreatePage ? "outlined" : "contained"}
+                    startIcon={<AddIcon />}
+                  >
+                    New Task
+                  </Button>
+                  <Typography variant="body2" color="text.secondary" sx={{ px: 1 }}>
+                    {user?.name}
+                  </Typography>
+                  <Button
+                    variant="text"
+                    onClick={() => {
+                      logoutUser();
+                      showSnackbar("Logged out successfully.", "success");
+                      navigate("/login");
+                    }}
+                  >
+                    Logout
+                  </Button>
+                </>
+              ) : (
+                <>
+                  <Button component={Link} to="/login" color="inherit">
+                    Login
+                  </Button>
+                  <Button component={Link} to="/register" variant="contained">
+                    Create account
+                  </Button>
+                </>
+              )}
+            </Stack>
+          )}
         </Toolbar>
       </Container>
     </AppBar>
