@@ -4,7 +4,7 @@
   "main": "dist/index.js",
   "type": "commonjs",
   "prisma": {
-    "seed": "ts-node-dev prisma/seed.ts"
+    "seed": "ts-node prisma/seed.ts"
   },
   "scripts": {
     "dev": "ts-node-dev --respawn --transpile-only src/index.ts",
@@ -24,6 +24,7 @@
     "@types/express": "^4.17.21",
     "@types/node": "^20.x",
     "prisma": "^5.22.0",
+    "ts-node": "^10.9.2",
     "ts-node-dev": "^2.0.0",
     "typescript": "^5.x",
     "zod": "^4.3.6"
